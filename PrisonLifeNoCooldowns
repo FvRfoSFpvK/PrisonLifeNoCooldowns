@@ -1,0 +1,107 @@
+
+-- Made By Bobo
+-- Weapon cooldown test for your own Roblox experience
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local settings = {
+    NoCooldown = false,
+    InstantReload = false,
+}
+
+local function updateTool(tool)
+    if not tool:IsA("Tool") then
+        return
+    end
+
+    if tool:GetAttribute("ToolType") ~= "Gun" then
+        return
+    end
+
+    -- Save original values once.
+    if tool:GetAttribute("OriginalFireRate") == nil then
+        tool:SetAttribute(
+            "OriginalFireRate",
+            tool:GetAttribute("FireRate") or 0.25
+        )
+    end
+
+    if tool:GetAttribute("OriginalReloadTime") == nil then
+        tool:SetAttribute(
+            "OriginalReloadTime",
+            tool:GetAttribute("ReloadTime") or 2
+        )
+    end
+
+    -- These values are for your own local test weapon.
+    local fireRate = settings.NoCooldown
+        and 0
+        or tool:GetAttribute("OriginalFireRate")
+
+    local reloadTime = settings.InstantReload
+        and 0
+        or tool:GetAttribute("OriginalReloadTime")
+
+    tool:SetAttribute("FireRate", fireRate)
+    tool:SetAttribute("ReloadTime", reloadTime)
+end
+
+local function scan(container)
+    if not container then
+        return
+    end
+
+    for _, tool in ipairs(container:GetChildren()) do
+        updateTool(tool)
+    end
+end
+
+local function monitor(container)
+    if not container then
+        return
+    end
+
+    scan(container)
+
+    container.ChildAdded:Connect(function(tool)
+        task.wait()
+        updateTool(tool)
+    end)
+end
+
+local function applySettings()
+    scan(player:FindFirstChild("Backpack"))
+    scan(player.Character)
+end
+
+-- Example toggle functions for your UI to call.
+local function setNoCooldown(enabled)
+    settings.NoCooldown = enabled
+    applySettings()
+    print("No cooldown:", enabled)
+end
+
+local function setInstantReload(enabled)
+    settings.InstantReload = enabled
+    applySettings()
+    print("Instant reload:", enabled)
+end
+
+monitor(player:WaitForChild("Backpack"))
+
+if player.Character then
+    monitor(player.Character)
+end
+
+player.CharacterAdded:Connect(function(character)
+    monitor(character)
+    task.wait()
+    applySettings()
+end)
+
+-- Enable these for testing in your own experience:
+-- setNoCooldown(true)
+-- setInstantReload(true)
+
+print("Made By Bobo weapon test settings loaded.")
